@@ -1,73 +1,138 @@
-# React + TypeScript + Vite
+# Trading Toolkit
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small collection of browser-only trading calculators. No backend, no accounts,
+no data leaves the page.
 
-Currently, two official plugins are available:
+Live: https://viktor-ommm.github.io/trading-tool/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tools
 
-## React Compiler
+| Tool | Route | Status |
+| --- | --- | --- |
+| Position Size | `/tools/position-size` | ready |
+| Stop-Loss | `/tools/stop-loss` | ready |
+| Risk / Reward | `/tools/risk-reward` | planned |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Position Size** — entry and stop are fixed; the size is what gives way. Returns
+the direction, share count, notional size, the fee breakdown, and the break-even
+price.
 
-## Expanding the ESLint configuration
+**Stop-Loss** — size is fixed; the stop moves. Returns the long and short stop
+prices, their exit fees, and the break-even price on each side.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Both read the same maths from `src/lib/risk.ts`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Fees
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Every result is after fees. "Risk per trade" means the **total** loss at the stop
+— price move plus the entry fee plus the exit fee — so the position comes out
+smaller, and the stop closer, than a fee-blind calculator would suggest.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Position size solves
+
+```
+risk = q·|entry − stop| + q·entry·feeIn + q·stop·feeOut
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+for `q`, so the `Total` row of the result always equals the risk budget exactly.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Break-even is the price where the round trip nets zero after both fees:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+long:   entry · (1 + feeIn) / (1 − feeOut)
+short:  entry · (1 − feeIn) / (1 + feeOut)
+```
+
+Defaults are Bybit VIP 0 perpetuals, limit order (maker): **0.02%** on each leg,
+from the [Bybit fee schedule](https://www.bybit.com/en/help-center/article/Trading-Fee-Structure)
+(read 2026-09-18). Both legs are editable — a stop that triggers as a market
+order pays taker, **0.055%**, and spot is **0.1%** either way. The numbers live
+in `src/lib/fees.ts`.
+
+## Development
+
+```bash
+npm install
+npm run dev         # vite dev server
+npm test            # vitest, one pass
+npm run test:watch  # vitest, watch mode
+npm run build       # type-check + production build
+npm run lint
+```
+
+CI runs lint, tests and the build before deploying.
+
+### Tests
+
+The maths and the validation are pure functions, so they are covered directly:
+
+- `src/lib/risk.test.ts` — sizing, stop placement, break-even, the fee floor
+- `src/lib/validation.test.ts` — form rules on both tools
+- `src/ui/format.test.ts` — display formatting
+
+The sizing tests do not re-use the formula under test. They rebuild the realised
+loss from first principles — buy in, sell out, pay a fee on each notional — and
+assert it equals the risk budget. Breaking a fee term in `risk.ts` fails them.
+
+React components are not covered; keep new logic in `src/lib/` so it stays
+testable without a DOM.
+
+## Project layout
+
+```
+src/
+  app/                  # shell: router, sidebar layout, home grid, 404
+  ui/                   # shared primitives: Field, Results, icons, formatters
+  lib/
+    risk.ts             # pure maths, no React
+    validation.ts       # form validation
+    fees.ts             # Bybit fee defaults
+  tools/
+    registry.ts         # single source of truth for the tool list
+    types.ts            # Tool interface
+    position-size/
+      meta.ts           # id, title, summary, icon
+      PositionSizeCalculator.tsx
+    stop-loss/
+      meta.ts
+      StopLossCalculator.tsx
+    risk-reward/        # placeholder tool
+```
+
+One tool = one menu item = one route. A tool that would need mode tabs is two
+tools instead.
+
+## Adding a tool
+
+1. Create `src/tools/<id>/`.
+2. Add `meta.ts` exporting `{ id, title, summary, icon }`. The order of entries
+   in `registry.ts` is the order shown in the sidebar and on the home grid. The `id` becomes the
+   public URL (`/tools/<id>`), so keep it stable. `icon` is a key from
+   `src/ui/icons.tsx` — add a new symbol there if none fits.
+3. Put the maths in `src/lib/` as plain functions with no React imports, and the
+   form in a default-exported component. Reuse `Field`, `FeeFields`,
+   `Results`/`ResultRow`/`ResultGroup` and `ToolPage` from `src/ui/` so the new
+   tool matches the rest.
+4. Append one entry to `src/tools/registry.ts`:
+
+   ```ts
+   {
+     ...meta,
+     status: 'ready',
+     Component: lazy(() => import('./<id>/<Component>')),
+   }
+   ```
+
+The route, the sidebar link and the home grid card all follow from that entry —
+nothing else needs editing.
+
+If you rename or split a tool, add the old id to `movedTools` in the same file
+so existing links redirect instead of 404-ing.
+
+## Deployment
+
+Pushing to `main` builds and publishes to GitHub Pages
+(`.github/workflows/deploy.yml`). The app is served from a sub-path, so
+`vite.config.ts` sets `base: '/trading-tool/'` and the router picks it up via
+`import.meta.env.BASE_URL`. The workflow also copies `index.html` to `404.html`
+so deep links resolve — GitHub Pages has no SPA rewrite rule.
