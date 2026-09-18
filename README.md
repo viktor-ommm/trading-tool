@@ -11,7 +11,7 @@ Live: https://viktor-ommm.github.io/trading-tool/
 | --- | --- | --- |
 | Position Size | `/tools/position-size` | ready |
 | Stop-Loss | `/tools/stop-loss` | ready |
-| Risk / Reward | `/tools/risk-reward` | planned |
+| Scaling | `/tools/scaling` | ready |
 
 **Position Size** — entry and stop are fixed; the size is what gives way. Returns
 the direction, share count, notional size, the fee breakdown, and the break-even
@@ -21,6 +21,29 @@ price.
 prices, their exit fees, and the break-even price on each side.
 
 Both read the same maths from `src/lib/risk.ts`.
+
+**Scaling** — a ledger of buys and sells on one instrument. Add a row per fill,
+in units or in cash, and it shows where the remaining position breaks even once
+every fee is counted. Handles scaling in, averaging down, partial exits and net
+short from the same reduction, and keeps the ledger in `localStorage`. Maths in
+`src/lib/ledger.ts`.
+
+Everything reduces to two running totals — net quantity and net cash:
+
+```
+buy  q at p:  quantity += q,  cash -= q·p·(1 + feeBuy)
+sell q at p:  quantity -= q,  cash += q·p·(1 - feeSell)
+```
+
+Break-even is the price that brings cash back to zero:
+
+```
+long:   -cash / (quantity · (1 - feeSell))
+short:   cash / (-quantity · (1 + feeBuy))
+```
+
+A cash amount is read as notional — `$1,500 at 100` is 15 units, with the fee on
+top, the way a limit order with a total works.
 
 ### Fees
 
@@ -68,12 +91,14 @@ request and on every push to `main`.
 The maths and the validation are pure functions, so they are covered directly:
 
 - `src/lib/risk.test.ts` — sizing, stop placement, break-even, the fee floor
-- `src/lib/validation.test.ts` — form rules on both tools
+- `src/lib/ledger.test.ts` — scaling in, partial exits, closed/free/short states
+- `src/lib/validation.test.ts` — form rules on the two risk tools
 - `src/ui/format.test.ts` — display formatting
 
-The sizing tests do not re-use the formula under test. They rebuild the realised
-loss from first principles — buy in, sell out, pay a fee on each notional — and
-assert it equals the risk budget. Breaking a fee term in `risk.ts` fails them.
+The sizing and ledger tests do not re-use the formula under test. They rebuild
+the realised cash from first principles — buy in, sell out, pay a fee on each
+notional — and assert it comes out at zero (or at the risk budget). Breaking a
+fee term in `risk.ts` or `ledger.ts` fails them.
 
 React components are not covered; keep new logic in `src/lib/` so it stays
 testable without a DOM.
@@ -85,9 +110,11 @@ src/
   app/                  # shell: router, sidebar layout, home grid, 404
   ui/                   # shared primitives: Field, Results, icons, formatters
   lib/
-    risk.ts             # pure maths, no React
+    risk.ts             # sizing and stop maths, no React
+    ledger.ts           # buy/sell ledger maths, no React
     validation.ts       # form validation
     fees.ts             # default fee rates
+    storage.ts          # best-effort localStorage
   tools/
     registry.ts         # single source of truth for the tool list
     types.ts            # Tool interface
@@ -97,7 +124,11 @@ src/
     stop-loss/
       meta.ts
       StopLossCalculator.tsx
-    risk-reward/        # placeholder tool
+    scaling/
+      meta.ts
+      rows.ts           # the editable row shape
+      TradeTable.tsx
+      ScalingCalculator.tsx
 ```
 
 One tool = one menu item = one route. A tool that would need mode tabs is two

@@ -29,6 +29,13 @@ function checkFees(inputs: RawInputs<FeeFieldName>, errors: Errors<FeeFieldName>
   if (feeOut) errors.feeOut = feeOut
 }
 
+/** For tools whose only form-level rules are the two fee fields. */
+export function validateFees(inputs: RawInputs<FeeFieldName>): Errors<FeeFieldName> {
+  const errors: Errors<FeeFieldName> = {}
+  checkFees(inputs, errors)
+  return errors
+}
+
 export function readFees(inputs: RawInputs<FeeFieldName>): Fees {
   return { entry: pctToRate(inputs.feeIn), exit: pctToRate(inputs.feeOut) }
 }

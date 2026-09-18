@@ -84,6 +84,11 @@
   margin: 0 auto;
 }
 
+/* Table-shaped tools need the extra column width. */
+.tool-page.wide {
+  max-width: 740px;
+}
+
 .tool-head {
   margin-bottom: 28px;
 }
@@ -304,6 +309,189 @@
   text-align: center;
 }
 
+/* ---- Trade ledger ---- */
+
+.trades {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.trade-head,
+.trade-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) minmax(0, 1fr) 76px minmax(0, 120px) 32px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.trade-head {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--social-bg);
+  border-bottom: 1px solid var(--border);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.trade-row + .trade-row {
+  border-top: 1px solid var(--border);
+}
+
+/* Inset rather than a real border, so the grid does not shift by 3px. */
+.trade-row.buy {
+  box-shadow: inset 3px 0 0 var(--up);
+}
+
+.trade-row.sell {
+  box-shadow: inset 3px 0 0 var(--down);
+}
+
+.trade-row.buy .cell-side {
+  color: var(--up);
+}
+
+.trade-row.sell .cell-side {
+  color: var(--down);
+}
+
+.trade-row.buy .cell-equals {
+  color: var(--up);
+}
+
+.trade-row.sell .cell-equals {
+  color: var(--down);
+}
+
+.trade-row select,
+.trade-row input {
+  height: 36px;
+  min-width: 0;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+}
+
+.trade-row input {
+  font-family: var(--mono);
+}
+
+.trade-row select:focus,
+.trade-row input:focus {
+  border-color: var(--accent);
+}
+
+.cell-equals {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell-remove {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cell-remove:hover {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.trade-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.ghost-btn {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ghost-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ghost-btn.danger:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.ghost-btn.armed {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+/* ---- Headline result ---- */
+
+.headline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--social-bg);
+}
+
+.headline-label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.headline-value {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+}
+
+.headline.long .headline-value {
+  color: var(--up);
+}
+
+.headline.short .headline-value {
+  color: var(--down);
+}
+
+.headline-note {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.headline-empty {
+  margin: 24px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
 /* ---- Results ---- */
 
 .results {
@@ -337,6 +525,7 @@
 
 .result-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
@@ -348,23 +537,57 @@
 }
 
 .result-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   font-size: 15px;
   color: var(--text);
 }
 
+.result-label-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.hint-toggle:hover,
+.hint-toggle[aria-expanded='true'] {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.result-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.75;
+}
+
 .result-value {
+  flex: none;
   font-size: 15px;
   font-family: var(--mono);
   font-weight: 600;
   color: var(--text-h);
+  white-space: nowrap;
 }
 
 .result-row.long .result-value {
-  color: #38a169;
+  color: var(--up);
 }
 
 .result-row.short .result-value {
-  color: #e53e3e;
+  color: var(--down);
 }
 
 /* The line that must equal the risk budget — worth reading first. */
@@ -372,6 +595,12 @@
 .result-row.total .result-value {
   color: var(--text-h);
   font-weight: 600;
+}
+
+/* Emphasis belongs on the label, not on its explanation. */
+.result-row.total .result-hint {
+  font-weight: 400;
+  color: var(--text);
 }
 
 .note {
@@ -406,5 +635,48 @@
 
   .content {
     padding: 28px 16px 48px;
+  }
+
+  .trade-head {
+    display: none;
+  }
+
+  .trade-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 76px;
+    grid-template-areas:
+      'side side remove'
+      'price amount unit'
+      'equals equals equals';
+    row-gap: 8px;
+  }
+
+  .cell-side {
+    grid-area: side;
+  }
+
+  .cell-price {
+    grid-area: price;
+  }
+
+  .cell-amount {
+    grid-area: amount;
+  }
+
+  .cell-unit {
+    grid-area: unit;
+  }
+
+  .cell-equals {
+    grid-area: equals;
+    text-align: left;
+  }
+
+  .cell-remove {
+    grid-area: remove;
+    justify-self: end;
+  }
+
+  .headline-value {
+    font-size: 26px;
   }
 }
