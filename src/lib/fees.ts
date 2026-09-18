@@ -1,10 +1,10 @@
 /**
- * Exchange fee defaults.
+ * Default fee rates, in percent.
  *
- * Source: Bybit "Bybit Trading Fee Structure" help-center article, VIP 0 row,
- * read 2026-09-18 (article last updated 2026-09-02).
+ * Typical non-discounted rates on a major centralised exchange. They are only
+ * a starting point — every form lets both legs be edited.
  */
-export const BYBIT_VIP0 = {
+export const DEFAULT_FEES = {
   /** Perpetual & futures, limit order. */
   perpMaker: 0.02,
   /** Perpetual & futures, market order — what a triggered stop usually pays. */
@@ -17,7 +17,7 @@ export const BYBIT_VIP0 = {
  * Default for both legs: a limit order pays the maker fee, and perpetuals are
  * the market this calculator is shaped for (it prices long and short symmetrically).
  */
-export const DEFAULT_FEE_PCT = String(BYBIT_VIP0.perpMaker)
+export const DEFAULT_FEE_PCT = String(DEFAULT_FEES.perpMaker)
 
 /** `0.02` (percent) -> `0.0002` (fraction of notional). */
 export function pctToRate(pct: string | number): number {

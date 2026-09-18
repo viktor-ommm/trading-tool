@@ -43,11 +43,11 @@ long:   entry · (1 + feeIn) / (1 − feeOut)
 short:  entry · (1 − feeIn) / (1 + feeOut)
 ```
 
-Defaults are Bybit VIP 0 perpetuals, limit order (maker): **0.02%** on each leg,
-from the [Bybit fee schedule](https://www.bybit.com/en/help-center/article/Trading-Fee-Structure)
-(read 2026-09-18). Both legs are editable — a stop that triggers as a market
-order pays taker, **0.055%**, and spot is **0.1%** either way. The numbers live
-in `src/lib/fees.ts`.
+Defaults are perpetuals on a limit (maker) order: **0.02%** on each leg — typical
+non-discounted rates on a major centralised exchange. Both legs are editable: a
+stop that triggers as a market order pays taker, **0.055%**, and spot is
+typically **0.1%** either way. The numbers live in `src/lib/fees.ts`; check your
+own exchange and tier rather than trusting the defaults.
 
 ## Development
 
@@ -86,7 +86,7 @@ src/
   lib/
     risk.ts             # pure maths, no React
     validation.ts       # form validation
-    fees.ts             # Bybit fee defaults
+    fees.ts             # default fee rates
   tools/
     registry.ts         # single source of truth for the tool list
     types.ts            # Tool interface
