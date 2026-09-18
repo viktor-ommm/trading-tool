@@ -60,7 +60,8 @@ npm run build       # type-check + production build
 npm run lint
 ```
 
-CI runs lint, tests and the build before deploying.
+CI (`.github/workflows/ci.yml`) runs lint, tests and the build on every pull
+request and on every push to `main`.
 
 ### Tests
 
@@ -131,8 +132,12 @@ so existing links redirect instead of 404-ing.
 
 ## Deployment
 
-Pushing to `main` builds and publishes to GitHub Pages
-(`.github/workflows/deploy.yml`). The app is served from a sub-path, so
+`.github/workflows/ci.yml` holds both jobs. `check` runs lint, tests and the
+build — on pull requests and on pushes to `main`. `deploy` publishes to GitHub
+Pages, and runs only on a push to `main`, only after `check` passes. The build
+happens once: `check` uploads the Pages artifact and `deploy` just releases it.
+
+The app is served from a sub-path, so
 `vite.config.ts` sets `base: '/trading-tool/'` and the router picks it up via
 `import.meta.env.BASE_URL`. The workflow also copies `index.html` to `404.html`
 so deep links resolve — GitHub Pages has no SPA rewrite rule.
