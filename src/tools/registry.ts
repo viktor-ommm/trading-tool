@@ -2,7 +2,7 @@ import { lazy } from 'react'
 import type { Tool } from './types'
 import { meta as positionSize } from './position-size/meta'
 import { meta as stopLoss } from './stop-loss/meta'
-import { meta as riskReward } from './risk-reward/meta'
+import { meta as scaling } from './scaling/meta'
 
 /**
  * The single source of truth for what this toolkit contains.
@@ -23,9 +23,9 @@ export const tools: Tool[] = [
     Component: lazy(() => import('./stop-loss/StopLossCalculator')),
   },
   {
-    ...riskReward,
-    status: 'planned',
-    Component: lazy(() => import('./risk-reward/RiskReward')),
+    ...scaling,
+    status: 'ready',
+    Component: lazy(() => import('./scaling/ScalingCalculator')),
   },
 ]
 
@@ -40,4 +40,6 @@ export function findTool(id: string | undefined): Tool | undefined {
 export const movedTools: Record<string, string> = {
   // Split into two separate tools.
   'risk-calculator': 'stop-loss',
+  // Placeholder replaced by the scaling ledger.
+  'risk-reward': 'scaling',
 }

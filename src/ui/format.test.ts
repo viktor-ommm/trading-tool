@@ -7,6 +7,11 @@ describe('money', () => {
     expect(money(2)).toBe('$2.00')
     expect(money(0)).toBe('$0.00')
   })
+
+  it('puts a minus sign in front of the currency symbol', () => {
+    expect(money(-79.28)).toBe('-$79.28')
+    expect(price(-1234.5)).toBe('-$1,234.50')
+  })
 })
 
 describe('price', () => {
